@@ -4,44 +4,50 @@
 #define OLC_PGEX_TRANSFORMEDVIEW
 #include "olcPGEX_TransformedView.h"
 
-void calculateRectangle(olc::vi2d pos1, olc::vi2d pos2, olc::vi2d& topLeft, olc::vi2d& size)
+class TextBox
 {
-	topLeft.x = std::min(pos1.x, pos2.x);
-	topLeft.y = std::min(pos1.y, pos2.y);
-	size.x = std::abs(pos1.x - pos2.x);
-	size.y = std::abs(pos1.y - pos2.y);
-}
+public:
+	olc::vi2d padding = { 2, 2 };
+	olc::vi2d pos;
+	std::string text;
+	int width;
+	olc::PixelGameEngine* pge;
+	float scale;
 
-struct Node
-{
-	olc::vi2d position;
-};
+	void Reset()
+	{
+		pos = { 0, 0 };
+		text = "";
+		width = 1;
+		scale = 10;
+	}
 
-struct Connection
-{
-	olc::vi2d position1;
-	olc::vi2d position2;
+	void Render()
+	{
+		pge->FillRect(pos - padding * scale, olc::vi2d{ width, 8 } * scale + 2 * padding * scale, olc::DARK_GREY);
+		pge->DrawString(pos, text, olc::WHITE, scale);
+	}
 };
 
 class VisualNeuralNetworkModeler : public olc::PixelGameEngine
 {
 public:
 	olc::TransformedView view;
-	std::vector<Node> nodes;
-	std::vector<Connection> connections;
 	olc::vi2d mouse;
-	olc::vi2d prevMouse;
+	TextBox textBox;
+	std::vector<TextBox> textBoxes;
 	
 	VisualNeuralNetworkModeler()
 	{
-		sAppName = "Visual Neural Network Modeler";
+		sAppName = "Visual Neural Network Modeler Compiler";
 	}
 	
 	bool OnUserCreate() override
 	{
 		view.Initialise({ ScreenWidth(), ScreenHeight() });
-		mouse = view.ScreenToWorld(olc::vi2d(int(GetMouseX() * 0.1f + 0.5f) * 10, int(GetMouseY() * 0.1f + 0.5f) * 10));
-		
+		mouse = view.ScreenToWorld(olc::vi2d(GetMouseX(), GetMouseY()));
+		textBox.pge = this;
+
 		return true;
 	}
 
@@ -50,36 +56,40 @@ public:
 		view.HandlePanAndZoom();
 
 		Clear(olc::BLACK);
-
-		prevMouse = mouse;
+		
 		mouse = view.ScreenToWorld(olc::vi2d(int(GetMouseX() * 0.1f + 0.5f) * 10, int(GetMouseY() * 0.1f + 0.5f) * 10));
-		Node node;
-		node.position = mouse;
-		nodes.push_back(node);
-
-		for (auto& node : nodes)
-			view.DrawCircle(node.position, 5, olc::RED);
-		/*for (auto& line : lines)
-		{
-			view.DrawCircle(line.p1, 5, line.color);
-			view.DrawLine(line.p1, line.p2, line.color);
-			view.DrawCircle(line.p2, 5, line.color);
-		}
+		
+		view.DrawCircle(mouse, 5, olc::RED);
 
 		if (GetMouse(0).bPressed)
 		{
-			Line line;
-			line.p1 = mouse;
-			line.p2 = mouse;
-			line.color = olc::RED;
-			lines.push_back(line);
+			textBox.Reset();
+			textBox.pos = mouse;
+			TextEntryEnable(true);
 		}
-		else if (lines.size() > 0 && GetMouse(0).bHeld)
-		{
-			lines.back().p2 = mouse;
-		}*/
 
+		if (IsTextEntryEnabled())
+		{
+			textBox.width = TextEntryGetString().size() * 8;
+			textBox.text = TextEntryGetString();
+			textBox.Render();
+		}
+		else
+		{
+			DrawString(0, 8, "Click to enter text", olc::WHITE, 1);
+		}
+
+		for (auto& textBox : textBoxes)
+		{
+			textBox.Render();
+		}
+		
 		return true;
+	}
+
+	void OnTextEntryComplete(const std::string& text) override
+	{
+		textBoxes.push_back(textBox);
 	}
 };
 
