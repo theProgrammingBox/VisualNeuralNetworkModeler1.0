@@ -7,13 +7,56 @@ public:
     olc::vf2d size;
     olc::Pixel color;
     std::string label;
+	olc::PixelGameEngine* pge;
 
-    RectangleText(olc::vf2d pos, olc::vf2d sz, const olc::Pixel& clr, const std::string& lbl)
-        : position(pos), size(sz), color(clr), label(lbl) {}
+    RectangleText(olc::PixelGameEngine* pge, olc::vf2d pos = olc::vf2d(10, 10), olc::vf2d sz = olc::vf2d(100, 30), const olc::Pixel& clr = olc::BLANK, const std::string& lbl = "Default")
+		: position(pos), size(sz), color(clr), label(lbl), pge(pge) {
+		if (color == olc::BLANK) {
+			color = GetColorFromValue(rand() / static_cast<float>(RAND_MAX));
+		}
+    }
 
     bool Contains(olc::vf2d point) const {
         return point.x >= position.x && point.x <= position.x + size.x &&
             point.y >= position.y && point.y <= position.y + size.y;
+    }
+
+	void Render() {
+		pge->FillRect(position, size, color);
+		pge->DrawRect(position, size, olc::WHITE);
+		pge->DrawString(position + olc::vf2d(5, 5), label, olc::WHITE);
+	}
+
+private:
+    olc::Pixel HSLtoRGB(float h, float s, float l) {
+        auto hue2rgb = [](float p, float q, float t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1.0 / 6) return p + (q - p) * 6 * t;
+            if (t < 1.0 / 2) return q;
+            if (t < 2.0 / 3) return p + (q - p) * (0.666666667f - t) * 6;
+            return p;
+        };
+
+        if (s == 0) {
+            uint8_t gray = static_cast<uint8_t>(l * 255.0f);
+            return olc::Pixel(gray, gray, gray);
+        }
+
+        float q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        float p = 2 * l - q;
+        float r = hue2rgb(p, q, h + 1.0 / 3);
+        float g = hue2rgb(p, q, h);
+        float b = hue2rgb(p, q, h - 1.0 / 3);
+
+        return olc::Pixel(static_cast<uint8_t>(r * 255), static_cast<uint8_t>(g * 255), static_cast<uint8_t>(b * 255));
+    }
+
+    olc::Pixel GetColorFromValue(float value) {
+        float hue = fmod(value, 1.0f);
+        float saturation = 0.8f;
+        float lightness = 0.6f;
+        return HSLtoRGB(hue, saturation, lightness);
     }
 };
 
@@ -24,14 +67,11 @@ public:
     }
 
     bool OnUserCreate() override {
-        rectangles.emplace_back(olc::vf2d(10, 10), olc::vf2d(100, 30), olc::RED, "Default");
-        rectangles.emplace_back(olc::vf2d(10, 10), olc::vf2d(100, 30), olc::RED, "Default");
-        rectangles.emplace_back(olc::vf2d(10, 10), olc::vf2d(100, 30), olc::RED, "Default");
         return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
-        Clear(olc::BLACK);
+		Clear(olc::Pixel(40, 40, 40));
 
         if (GetMouse(0).bPressed) {
             selectedIndex = -1;
@@ -49,12 +89,14 @@ public:
             rectangles[selectedIndex].position += delta;
             initialMousePos = GetMousePos();
         }
-
-        for (const auto& rect : rectangles) {
-            FillRect(rect.position, rect.size, rect.color);
-            DrawRect(rect.position, rect.size, olc::WHITE);
-            DrawString(rect.position + olc::vf2d(5, 5), rect.label, olc::WHITE);
-        }
+        
+		if (GetMouse(1).bPressed) {
+			rectangles.emplace_back(RectangleText(this, GetMousePos()));
+		}
+        
+		for (auto& rect : rectangles) {
+			rect.Render();
+		}
 
         if (selectedIndex != -1) {
             DrawRect(rectangles[selectedIndex].position - olc::vf2d(2, 2),
