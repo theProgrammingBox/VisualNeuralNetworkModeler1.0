@@ -6,15 +6,20 @@ class TextBox {
 public:
     TextBox(olc::PixelGameEngine* pge) {
         this->pge = pge;
+        
         label = "";
-        position = olc::vf2d(0, 0);
-        size = olc::vf2d(8, 8);
-        padding = olc::vf2d(0, 0);
-        color = olc::Pixel(0, 0, 0);
-        hue = 0.0f;
-        saturation = 0.0f;
-        lightness = 0.0f;
-		scale = 1;
+		position = olc::vi2d(0, 0);
+
+        scale = 1;
+		baseSize = olc::vi2d(0, 0);
+		padding = olc::vi2d(0, 0);
+		displayedSize = olc::vi2d(0, 0);
+
+		color = olc::BLANK;
+		hue = 0;
+		saturation = 0;
+		lightness = 0;
+
         textHug = true;
         movable = true;
         labelable = true;
@@ -23,45 +28,34 @@ public:
     void SetLabel(std::string label) {
         this->label = label;
 		if (textHug)
-            SetSize(olc::vf2d(label.size() * 8, 8));
+            SetBaseSize(olc::vi2d(label.size() * 8, 8));
     }
 
-    void SetPosition(olc::vf2d position) {
+    void SetPosition(olc::vi2d position) {
         this->position = position;
     }
 
 	void SetScale(float scale) {
 		this->scale = scale;
+        UpdateDisplayedSize();
 	}
 
-    void SetSize(olc::vf2d size) {
-        this->size = size;
-        UpdateBoundingBox();
+    void SetBaseSize(olc::vi2d size) {
+		this->baseSize = size;
+        UpdateDisplayedSize();
     }
 
-    void SetPadding(olc::vf2d padding) {
+    void SetPadding(olc::vi2d padding) {
         this->padding = padding;
-        UpdateBoundingBox();
+        UpdateDisplayedSize();
     }
 
-    void UpdateBoundingBox() {
-        size += padding * 2;
+    void UpdateDisplayedSize() {
+        displayedSize = (baseSize + padding * 2) * scale;
     }
 
 	void SetColor(olc::Pixel color) {
 		this->color = color;
-	}
-
-	void SetTextHug(bool textHug) {
-		this->textHug = textHug;
-	}
-    
-	void SetMovable(bool movable) {
-		this->movable = movable;
-	}
-
-	void SetLabelable(bool labelable) {
-		this->labelable = labelable;
 	}
 
     void SetHSL(float h, float s, float l) {
@@ -92,35 +86,51 @@ public:
         color = olc::Pixel(static_cast<uint8_t>(r * 255), static_cast<uint8_t>(g * 255), static_cast<uint8_t>(b * 255));
     }
 
-    bool Contains(olc::vf2d point) const {
-        return point.x >= position.x && point.x <= position.x + size.x &&
-            point.y >= position.y && point.y <= position.y + size.y;
+    void SetTextHug(bool textHug) {
+        this->textHug = textHug;
     }
 
-    void Move(olc::vf2d delta) {
+    void SetMovable(bool movable) {
+        this->movable = movable;
+    }
+
+    void SetLabelable(bool labelable) {
+        this->labelable = labelable;
+    }
+
+    bool Contains(olc::vi2d point) const {
+		return point.x >= position.x && point.x <= position.x + displayedSize.x && point.y >= position.y && point.y <= position.y + displayedSize.y;
+    }
+
+    void Move(olc::vi2d delta) {
         position += delta;
     }
 
     void Render() {
-        pge->FillRect(position, size, color);
+		pge->FillRect(position, displayedSize, color);
 		pge->DrawString(position + padding * scale, label, olc::WHITE, scale);
     }
 
-    olc::vf2d GetPosition() const {
+    olc::vi2d GetPosition() const {
         return position;
     }
 
 private:
     olc::PixelGameEngine* pge;
+    
     std::string label;
-    olc::vf2d position;
-    olc::vf2d size;
-    olc::vf2d padding;
-    olc::Pixel color;
+    olc::vi2d position;
+
 	uint32_t scale;
+    olc::vi2d baseSize;
+    olc::vi2d padding;
+	olc::vi2d displayedSize;
+    
+    olc::Pixel color;
     float hue;
     float saturation;
     float lightness;
+    
     bool textHug;
 	bool movable;
     bool labelable;

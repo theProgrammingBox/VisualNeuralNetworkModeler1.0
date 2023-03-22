@@ -14,7 +14,7 @@ public:
     bool OnUserCreate() override {
         pastMousePos = GetMousePos();
         
-        TextBox upperPannel(this);
+        /*TextBox upperPannel(this);
 		upperPannel.SetTextHug(false);
 		upperPannel.SetMovable(false);
 		upperPannel.SetLabel("Component Name");
@@ -23,7 +23,7 @@ public:
 		upperPannel.SetPadding(olc::vf2d(4, 4));
 		upperPannel.SetScale(4);
 		upperPannel.SetPosition(olc::vf2d(20, 20));
-		rectangles.push_back(upperPannel);
+		rectangles.push_back(upperPannel);*/
         return true;
     }
 
