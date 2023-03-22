@@ -8,39 +8,46 @@ TODO
 
 class RectangleText {
 public:
-	olc::PixelGameEngine* pge;
-    olc::vf2d position;
-    olc::vf2d size;
-    olc::vf2d padding;
-    olc::Pixel color;
-    std::string label;
-	float colorValue;
+    RectangleText(olc::PixelGameEngine* pge) {
+		this->pge = pge;
+		label = "";
+		position = olc::vf2d(0, 0);
+		size = olc::vf2d(0, 0);
+		padding = olc::vf2d(0, 0);
+		hue = 0.0f;
+		saturation = 0.0f;
+		lightness = 0.0f;
+		color = olc::Pixel(0, 0, 0);
+    }
 
-	RectangleText(olc::PixelGameEngine* pge, olc::vf2d pos = olc::vf2d(10, 10), olc::vf2d sz = olc::vf2d(54, 8), olc::vf2d pd = olc::vf2d(4, 4), olc::Pixel clr = olc::BLANK, const std::string& lbl = "Default", float clrVal = -1.0f)
-		: position(pos), size(sz), padding(pd), color(clr), label(lbl), colorValue(clrVal), pge(pge) {
-		if (clrVal == -1.0f) {
-			if (color == olc::BLANK) {
-				colorValue = rand() / static_cast<float>(RAND_MAX);
-				color = GetColorFromValue(colorValue);
-			}
-		} else {
-            color = GetColorFromValue(colorValue);
-        }
+	void SetLabel(std::string label) {
+		this->label = label;
+		SetSize(olc::vf2d(label.size() * 8, 8));
+	}
+
+	void SetPosition(olc::vf2d position) {
+		this->position = position;
+	}
+
+	void SetSize(olc::vf2d size) {
+        this->size = size;
+		UpdateBoundingBox();
+	}
+
+	void SetPadding(olc::vf2d padding) {
+		this->padding = padding;
+		UpdateBoundingBox();
+	}
+
+    void UpdateBoundingBox() {
         size += padding * 2;
     }
 
-    bool Contains(olc::vf2d point) const {
-        return point.x >= position.x && point.x <= position.x + size.x &&
-            point.y >= position.y && point.y <= position.y + size.y;
-    }
-
-    void Render() {
-        pge->FillRect(position, size, color);
-        pge->DrawString(position + padding, label, olc::WHITE);
-    }
-
-private:
-    olc::Pixel HSLtoRGB(float h, float s, float l) {
+	void SetHSL(float h, float s, float l) {
+		this->hue = h;
+		this->saturation = s;
+		this->lightness = l;
+        
         auto hue2rgb = [](float p, float q, float t) {
             if (t < 0) t += 1;
             if (t > 1) t -= 1;
@@ -52,7 +59,7 @@ private:
 
         if (s == 0) {
             uint8_t gray = static_cast<uint8_t>(l * 255.0f);
-            return olc::Pixel(gray, gray, gray);
+            color = olc::Pixel(gray, gray, gray);
         }
 
         float q = l < 0.5 ? l * (1 + s) : l + s - l * s;
@@ -61,15 +68,37 @@ private:
         float g = hue2rgb(p, q, h);
         float b = hue2rgb(p, q, h - 1.0 / 3);
 
-        return olc::Pixel(static_cast<uint8_t>(r * 255), static_cast<uint8_t>(g * 255), static_cast<uint8_t>(b * 255));
+        color = olc::Pixel(static_cast<uint8_t>(r * 255), static_cast<uint8_t>(g * 255), static_cast<uint8_t>(b * 255));
+	}
+
+    bool Contains(olc::vf2d point) const {
+        return point.x >= position.x && point.x <= position.x + size.x &&
+            point.y >= position.y && point.y <= position.y + size.y;
     }
 
-    olc::Pixel GetColorFromValue(float value) {
-        float hue = fmod(value, 1.0f);
-        float saturation = 0.75f;
-        float lightness = 0.5f;
-        return HSLtoRGB(hue, saturation, lightness);
+	void Move(olc::vf2d delta) {
+		position += delta;
+	}
+
+    void Render() {
+        pge->FillRect(position, size, color);
+        pge->DrawString(position + padding, label, olc::WHITE);
     }
+
+	olc::vf2d GetPosition() const {
+		return position;
+	}
+
+private:
+    olc::PixelGameEngine* pge;
+    std::string label;
+    olc::vf2d position;
+    olc::vf2d size;
+    olc::vf2d padding;
+    float hue;
+    float saturation;
+    float lightness;
+    olc::Pixel color;
 };
 
 class RectangleDetector : public olc::PixelGameEngine {
@@ -91,7 +120,7 @@ public:
         if (GetMouse(0).bPressed) {
             selectedIndex = -1;
             if (!IsTextEntryEnabled()) {
-				std::cout << "Mouse pressed" << std::endl;
+                std::cout << "Mouse pressed" << std::endl;
                 for (size_t i = rectangles.size(); i--;) {
                     if (rectangles[i].Contains(initialMousePos)) {
                         selectedIndex = static_cast<int32_t>(i);
@@ -99,13 +128,14 @@ public:
                         break;
                     }
                 }
-            } else {
+            }
+            else {
                 TextEntryEnable(false);
             }
         }
         else if (GetMouse(0).bHeld && selectedIndex != -1) {
             olc::vf2d delta = GetMousePos() - initialMousePos;
-            rectangles[selectedIndex].position += delta;
+			rectangles[selectedIndex].Move(delta);
         }
         else if (GetMouse(0).bReleased && selectMousePos == GetMousePos()) {
             timer = 0.0f;
@@ -117,12 +147,16 @@ public:
         {
             timer += fElapsedTime;
             timer -= (timer >= 1.0f);
-            rectangles[selectedIndex].size.x = (TextEntryGetString().size() + 1) * 8;
-            rectangles[selectedIndex].label = TextEntryGetString();
+			rectangles[selectedIndex].SetLabel(TextEntryGetString());
         }
 
         if (GetMouse(1).bPressed) {
-            rectangles.emplace_back(RectangleText(this, GetMousePos()));
+			RectangleText rect(this);
+			rect.SetPosition(GetMousePos());
+			rect.SetLabel("Default");
+			rect.SetPadding(olc::vf2d(4, 4));
+            rect.SetHSL((float)rand() / RAND_MAX, 0.75f, 0.5f);
+			rectangles.emplace_back(rect);
         }
 
         for (auto& rect : rectangles) {
@@ -136,11 +170,10 @@ public:
             }
             if (timer < 0.5f) {
                 float x = TextEntryGetCursor() * 8 + 4;
-                olc::vf2d pos = rectangles[selectedIndex].position + olc::vf2d(x, 2);
-                FillRect(pos, olc::vf2d(2, 12), olc::WHITE);
+                FillRect(rectangles[selectedIndex].GetPosition() + olc::vf2d(x, 2), olc::vf2d(2, 12), olc::WHITE);
             }
-		}
-        
+        }
+
         initialMousePos = GetMousePos();
 
         return true;
