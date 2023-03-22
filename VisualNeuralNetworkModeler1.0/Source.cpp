@@ -21,7 +21,7 @@ public:
 		} else {
             color = GetColorFromValue(colorValue);
         }
-		size += padding * 2;
+        size += padding * 2;
     }
 
     bool Contains(olc::vf2d point) const {
@@ -29,19 +29,19 @@ public:
             point.y >= position.y && point.y <= position.y + size.y;
     }
 
-	void Render() {
-		pge->FillRect(position, size, color);
-		pge->DrawString(position + padding, label, olc::WHITE);
-	}
+    void Render() {
+        pge->FillRect(position, size, color);
+        pge->DrawString(position + padding, label, olc::WHITE);
+    }
 
 private:
     olc::Pixel HSLtoRGB(float h, float s, float l) {
         auto hue2rgb = [](float p, float q, float t) {
             if (t < 0) t += 1;
             if (t > 1) t -= 1;
-            if (t < 1.0 / 6) return p + (q - p) * 6 * t;
-            if (t < 1.0 / 2) return q;
-            if (t < 2.0 / 3) return p + (q - p) * (0.666666667f - t) * 6;
+            if (t < 0.166666667f) return p + (q - p) * 6 * t;
+            if (t < 0.5f) return q;
+            if (t < 0.666666667f) return p + (q - p) * (0.666666667f - t) * 6;
             return p;
         };
 
@@ -75,48 +75,62 @@ public:
 
     bool OnUserCreate() override {
         initialMousePos = GetMousePos();
-		selectMousePos = GetMousePos();
+        selectMousePos = GetMousePos();
+        timer = 0;
         return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
-		Clear(olc::Pixel(40, 40, 40));
+        timer += fElapsedTime;
+        timer -= (timer >= 1.0f);
+
+        Clear(olc::Pixel(40, 40, 40));
 
         if (GetMouse(0).bPressed) {
-			TextEntryEnable(false);
+            TextEntryEnable(false);
             selectedIndex = -1;
             for (size_t i = rectangles.size(); i--;) {
                 if (rectangles[i].Contains(initialMousePos)) {
                     selectedIndex = static_cast<int32_t>(i);
-					selectMousePos = GetMousePos();
+                    selectMousePos = GetMousePos();
                     break;
                 }
             }
-        } else if (GetMouse(0).bHeld && selectedIndex != -1) {
+        }
+        else if (GetMouse(0).bHeld && selectedIndex != -1) {
             olc::vf2d delta = GetMousePos() - initialMousePos;
             rectangles[selectedIndex].position += delta;
-        } else if (GetMouse(0).bReleased && selectMousePos == GetMousePos()) {
+        }
+        else if (GetMouse(0).bReleased && selectMousePos == GetMousePos()) {
             TextEntryEnable(true);
-		}
+            textEntryGetCursor = TextEntryGetCursor();
+        }
 
         if (IsTextEntryEnabled())
         {
             rectangles[selectedIndex].size.x = (TextEntryGetString().size() + 1) * 8;
-			rectangles[selectedIndex].label = TextEntryGetString();
+            rectangles[selectedIndex].label = TextEntryGetString();
         }
-        
-		if (GetMouse(1).bPressed) {
-			rectangles.emplace_back(RectangleText(this, GetMousePos()));
-		}
-        
-		for (auto& rect : rectangles) {
-			rect.Render();
-		}
 
-        /*if (selectedIndex != -1) {
-            DrawRect(rectangles[selectedIndex].position - olc::vf2d(1, 1),
-                rectangles[selectedIndex].size + olc::vf2d(1, 1), olc::WHITE);
-        }*/
+        if (GetMouse(1).bPressed) {
+            rectangles.emplace_back(RectangleText(this, GetMousePos()));
+        }
+
+        for (auto& rect : rectangles) {
+            rect.Render();
+        }
+
+        if (IsTextEntryEnabled()) {
+            if (textEntryGetCursor != TextEntryGetCursor()) {
+                timer = 0.0f;
+                textEntryGetCursor = TextEntryGetCursor();
+            }
+            if (timer < 0.5f) {
+                float x = TextEntryGetCursor() * 8 + 4;
+                olc::vf2d pos = rectangles[selectedIndex].position + olc::vf2d(x, 2);
+                FillRect(pos, olc::vf2d(2, 12), olc::WHITE);
+            }
+		}
         
         initialMousePos = GetMousePos();
 
@@ -128,6 +142,8 @@ private:
     int32_t selectedIndex = -1;
     olc::vf2d initialMousePos;
     olc::vf2d selectMousePos;
+    float textEntryGetCursor;
+    float timer;
 };
 
 int main() {
