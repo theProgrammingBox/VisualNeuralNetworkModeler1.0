@@ -1,102 +1,79 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
-#define OLC_PGEX_TRANSFORMEDVIEW
-#include "olcPGEX_TransformedView.h"
-
-class TextBox
-{
+class RectangleText {
 public:
-	olc::vi2d padding = { 2, 2 };
-	olc::vi2d pos;
-	std::string text;
-	int width;
-	olc::PixelGameEngine* pge;
-	float scale;
+    olc::vf2d position;
+    olc::vf2d size;
+    olc::Pixel color;
+    std::string label;
 
-	void Reset()
-	{
-		pos = { 0, 0 };
-		text = "";
-		width = 1;
-		scale = 10;
-	}
+    RectangleText(olc::vf2d pos, olc::vf2d sz, const olc::Pixel& clr, const std::string& lbl)
+        : position(pos), size(sz), color(clr), label(lbl) {}
 
-	void Render()
-	{
-		pge->FillRect(pos - padding * scale, olc::vi2d{ width, 8 } * scale + 2 * padding * scale, olc::DARK_GREY);
-		pge->DrawString(pos, text, olc::WHITE, scale);
-	}
+    bool Contains(olc::vf2d point) const {
+        return point.x >= position.x && point.x <= position.x + size.x &&
+            point.y >= position.y && point.y <= position.y + size.y;
+    }
 };
 
-class VisualNeuralNetworkModeler : public olc::PixelGameEngine
-{
+class RectangleDetector : public olc::PixelGameEngine {
 public:
-	olc::TransformedView view;
-	olc::vi2d mouse;
-	TextBox textBox;
-	std::vector<TextBox> textBoxes;
-	
-	VisualNeuralNetworkModeler()
-	{
-		sAppName = "Visual Neural Network Modeler Compiler";
-	}
-	
-	bool OnUserCreate() override
-	{
-		view.Initialise({ ScreenWidth(), ScreenHeight() });
-		mouse = view.ScreenToWorld(olc::vi2d(GetMouseX(), GetMouseY()));
-		textBox.pge = this;
+    RectangleDetector() {
+        sAppName = "RectangleText Detector";
+    }
 
-		return true;
-	}
+    bool OnUserCreate() override {
+        rectangles.emplace_back(olc::vf2d(10, 10), olc::vf2d(100, 30), olc::RED, "Default");
+        rectangles.emplace_back(olc::vf2d(10, 10), olc::vf2d(100, 30), olc::RED, "Default");
+        rectangles.emplace_back(olc::vf2d(10, 10), olc::vf2d(100, 30), olc::RED, "Default");
+        return true;
+    }
 
-	bool OnUserUpdate(float fElapsedTime) override
-	{
-		view.HandlePanAndZoom();
+    bool OnUserUpdate(float fElapsedTime) override {
+        Clear(olc::BLACK);
 
-		Clear(olc::BLACK);
-		
-		mouse = view.ScreenToWorld(olc::vi2d(int(GetMouseX() * 0.1f + 0.5f) * 10, int(GetMouseY() * 0.1f + 0.5f) * 10));
-		
-		view.DrawCircle(mouse, 5, olc::RED);
+        if (GetMouse(0).bPressed) {
+            selectedIndex = -1;
+            for (size_t i = rectangles.size(); i--;) {
+                if (rectangles[i].Contains(GetMousePos())) {
+                    selectedIndex = static_cast<int32_t>(i);
+                    initialMousePos = GetMousePos();
+                    break;
+                }
+            }
+        }
 
-		if (GetMouse(0).bPressed)
-		{
-			textBox.Reset();
-			textBox.pos = mouse;
-			TextEntryEnable(true);
-		}
+        if (GetMouse(0).bHeld && selectedIndex != -1) {
+            olc::vf2d delta = GetMousePos() - initialMousePos;
+            rectangles[selectedIndex].position += delta;
+            initialMousePos = GetMousePos();
+        }
 
-		if (IsTextEntryEnabled())
-		{
-			textBox.width = TextEntryGetString().size() * 8;
-			textBox.text = TextEntryGetString();
-			textBox.Render();
-		}
-		else
-		{
-			DrawString(0, 8, "Click to enter text", olc::WHITE, 1);
-		}
+        for (const auto& rect : rectangles) {
+            FillRect(rect.position, rect.size, rect.color);
+            DrawRect(rect.position, rect.size, olc::WHITE);
+            DrawString(rect.position + olc::vf2d(5, 5), rect.label, olc::WHITE);
+        }
 
-		for (auto& textBox : textBoxes)
-		{
-			textBox.Render();
-		}
-		
-		return true;
-	}
+        if (selectedIndex != -1) {
+            DrawRect(rectangles[selectedIndex].position - olc::vf2d(2, 2),
+                rectangles[selectedIndex].size + olc::vf2d(4, 4), olc::YELLOW);
+        }
 
-	void OnTextEntryComplete(const std::string& text) override
-	{
-		textBoxes.push_back(textBox);
-	}
+        return true;
+    }
+
+private:
+    std::vector<RectangleText> rectangles;
+    int32_t selectedIndex = -1;
+    olc::vf2d initialMousePos;
 };
 
-int main()
-{
-	VisualNeuralNetworkModeler visualNeuralNetworkModeler;
-	if (visualNeuralNetworkModeler.Construct(1440, 810, 1, 1))
-		visualNeuralNetworkModeler.Start();
-	return 0;
+int main() {
+    RectangleDetector demo;
+    if (demo.Construct(256, 240, 4, 4))
+        demo.Start();
+
+    return 0;
 }
