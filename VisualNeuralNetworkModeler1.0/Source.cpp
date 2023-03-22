@@ -3,17 +3,23 @@
 
 class RectangleText {
 public:
+	olc::PixelGameEngine* pge;
     olc::vf2d position;
     olc::vf2d size;
     olc::Pixel color;
     std::string label;
-	olc::PixelGameEngine* pge;
+	float colorValue;
 
-    RectangleText(olc::PixelGameEngine* pge, olc::vf2d pos = olc::vf2d(10, 10), olc::vf2d sz = olc::vf2d(100, 30), const olc::Pixel& clr = olc::BLANK, const std::string& lbl = "Default")
-		: position(pos), size(sz), color(clr), label(lbl), pge(pge) {
-		if (color == olc::BLANK) {
-			color = GetColorFromValue(rand() / static_cast<float>(RAND_MAX));
-		}
+	RectangleText(olc::PixelGameEngine* pge, olc::vf2d pos = olc::vf2d(10, 10), olc::vf2d sz = olc::vf2d(100, 30), olc::Pixel clr = olc::BLANK, const std::string& lbl = "Default", float clrVal = -1.0f)
+		: position(pos), size(sz), color(clr), label(lbl), pge(pge), colorValue(clrVal) {
+		if (clrVal == -1.0f) {
+			if (color == olc::BLANK) {
+				colorValue = rand() / static_cast<float>(RAND_MAX);
+				color = GetColorFromValue(colorValue);
+			}
+		} else {
+            color = GetColorFromValue(colorValue);
+        }
     }
 
     bool Contains(olc::vf2d point) const {
