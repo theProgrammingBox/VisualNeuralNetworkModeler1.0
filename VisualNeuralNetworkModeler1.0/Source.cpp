@@ -74,6 +74,8 @@ public:
     }
 
     bool OnUserCreate() override {
+        initialMousePos = GetMousePos();
+		selectMousePos = GetMousePos();
         return true;
     }
 
@@ -81,20 +83,26 @@ public:
 		Clear(olc::Pixel(40, 40, 40));
 
         if (GetMouse(0).bPressed) {
+			TextEntryEnable(false);
             selectedIndex = -1;
             for (size_t i = rectangles.size(); i--;) {
-                if (rectangles[i].Contains(GetMousePos())) {
+                if (rectangles[i].Contains(initialMousePos)) {
                     selectedIndex = static_cast<int32_t>(i);
-                    initialMousePos = GetMousePos();
+					selectMousePos = GetMousePos();
                     break;
                 }
             }
-        }
-
-        if (GetMouse(0).bHeld && selectedIndex != -1) {
+        } else if (GetMouse(0).bHeld && selectedIndex != -1) {
             olc::vf2d delta = GetMousePos() - initialMousePos;
             rectangles[selectedIndex].position += delta;
-            initialMousePos = GetMousePos();
+        } else if (GetMouse(0).bReleased && selectMousePos == GetMousePos()) {
+            TextEntryEnable(true);
+		}
+
+        if (IsTextEntryEnabled())
+        {
+            rectangles[selectedIndex].size.x = (TextEntryGetString().size() + 1) * 8;
+			rectangles[selectedIndex].label = TextEntryGetString();
         }
         
 		if (GetMouse(1).bPressed) {
@@ -105,10 +113,12 @@ public:
 			rect.Render();
 		}
 
-        if (selectedIndex != -1) {
+        /*if (selectedIndex != -1) {
             DrawRect(rectangles[selectedIndex].position - olc::vf2d(1, 1),
                 rectangles[selectedIndex].size + olc::vf2d(1, 1), olc::WHITE);
-        }
+        }*/
+        
+        initialMousePos = GetMousePos();
 
         return true;
     }
@@ -117,6 +127,7 @@ private:
     std::vector<RectangleText> rectangles;
     int32_t selectedIndex = -1;
     olc::vf2d initialMousePos;
+    olc::vf2d selectMousePos;
 };
 
 int main() {
