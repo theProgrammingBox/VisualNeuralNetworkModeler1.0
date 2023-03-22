@@ -6,12 +6,13 @@ public:
 	olc::PixelGameEngine* pge;
     olc::vf2d position;
     olc::vf2d size;
+    olc::vf2d padding;
     olc::Pixel color;
     std::string label;
 	float colorValue;
 
-	RectangleText(olc::PixelGameEngine* pge, olc::vf2d pos = olc::vf2d(10, 10), olc::vf2d sz = olc::vf2d(100, 30), olc::Pixel clr = olc::BLANK, const std::string& lbl = "Default", float clrVal = -1.0f)
-		: position(pos), size(sz), color(clr), label(lbl), pge(pge), colorValue(clrVal) {
+	RectangleText(olc::PixelGameEngine* pge, olc::vf2d pos = olc::vf2d(10, 10), olc::vf2d sz = olc::vf2d(54, 8), olc::vf2d pd = olc::vf2d(4, 4), olc::Pixel clr = olc::BLANK, const std::string& lbl = "Default", float clrVal = -1.0f)
+		: position(pos), size(sz), padding(pd), color(clr), label(lbl), colorValue(clrVal), pge(pge) {
 		if (clrVal == -1.0f) {
 			if (color == olc::BLANK) {
 				colorValue = rand() / static_cast<float>(RAND_MAX);
@@ -20,6 +21,7 @@ public:
 		} else {
             color = GetColorFromValue(colorValue);
         }
+		size += padding * 2;
     }
 
     bool Contains(olc::vf2d point) const {
@@ -29,8 +31,7 @@ public:
 
 	void Render() {
 		pge->FillRect(position, size, color);
-		pge->DrawRect(position, size, olc::WHITE);
-		pge->DrawString(position + olc::vf2d(5, 5), label, olc::WHITE);
+		pge->DrawString(position + padding, label, olc::WHITE);
 	}
 
 private:
@@ -60,8 +61,8 @@ private:
 
     olc::Pixel GetColorFromValue(float value) {
         float hue = fmod(value, 1.0f);
-        float saturation = 0.8f;
-        float lightness = 0.6f;
+        float saturation = 0.75f;
+        float lightness = 0.5f;
         return HSLtoRGB(hue, saturation, lightness);
     }
 };
@@ -105,8 +106,8 @@ public:
 		}
 
         if (selectedIndex != -1) {
-            DrawRect(rectangles[selectedIndex].position - olc::vf2d(2, 2),
-                rectangles[selectedIndex].size + olc::vf2d(4, 4), olc::YELLOW);
+            DrawRect(rectangles[selectedIndex].position - olc::vf2d(1, 1),
+                rectangles[selectedIndex].size + olc::vf2d(1, 1), olc::WHITE);
         }
 
         return true;
@@ -120,7 +121,7 @@ private:
 
 int main() {
     RectangleDetector demo;
-    if (demo.Construct(256, 240, 4, 4))
+    if (demo.Construct(640, 360, 2, 2))
         demo.Start();
 
     return 0;
