@@ -1,6 +1,11 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
+/*
+TODO
+1. work out lower panel
+*/
+
 class RectangleText {
 public:
 	olc::PixelGameEngine* pge;
@@ -81,20 +86,21 @@ public:
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
-        timer += fElapsedTime;
-        timer -= (timer >= 1.0f);
-
         Clear(olc::Pixel(40, 40, 40));
 
         if (GetMouse(0).bPressed) {
-            TextEntryEnable(false);
             selectedIndex = -1;
-            for (size_t i = rectangles.size(); i--;) {
-                if (rectangles[i].Contains(initialMousePos)) {
-                    selectedIndex = static_cast<int32_t>(i);
-                    selectMousePos = GetMousePos();
-                    break;
+            if (!IsTextEntryEnabled()) {
+				std::cout << "Mouse pressed" << std::endl;
+                for (size_t i = rectangles.size(); i--;) {
+                    if (rectangles[i].Contains(initialMousePos)) {
+                        selectedIndex = static_cast<int32_t>(i);
+                        selectMousePos = GetMousePos();
+                        break;
+                    }
                 }
+            } else {
+                TextEntryEnable(false);
             }
         }
         else if (GetMouse(0).bHeld && selectedIndex != -1) {
@@ -102,12 +108,15 @@ public:
             rectangles[selectedIndex].position += delta;
         }
         else if (GetMouse(0).bReleased && selectMousePos == GetMousePos()) {
+            timer = 0.0f;
             TextEntryEnable(true);
             textEntryGetCursor = TextEntryGetCursor();
         }
 
         if (IsTextEntryEnabled())
         {
+            timer += fElapsedTime;
+            timer -= (timer >= 1.0f);
             rectangles[selectedIndex].size.x = (TextEntryGetString().size() + 1) * 8;
             rectangles[selectedIndex].label = TextEntryGetString();
         }
