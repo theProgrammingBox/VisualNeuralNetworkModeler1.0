@@ -108,9 +108,7 @@ public:
     }
 
     bool OnUserCreate() override {
-        initialMousePos = GetMousePos();
-        selectMousePos = GetMousePos();
-        timer = 0;
+        pastMousePos = GetMousePos();
         return true;
     }
 
@@ -122,9 +120,9 @@ public:
             if (!IsTextEntryEnabled()) {
                 std::cout << "Mouse pressed" << std::endl;
                 for (size_t i = rectangles.size(); i--;) {
-                    if (rectangles[i].Contains(initialMousePos)) {
+                    if (rectangles[i].Contains(GetMousePos())) {
                         selectedIndex = static_cast<int32_t>(i);
-                        selectMousePos = GetMousePos();
+                        mouseClickPos = GetMousePos();
                         break;
                     }
                 }
@@ -134,10 +132,10 @@ public:
             }
         }
         else if (GetMouse(0).bHeld && selectedIndex != -1) {
-            olc::vf2d delta = GetMousePos() - initialMousePos;
+            olc::vf2d delta = GetMousePos() - pastMousePos;
 			rectangles[selectedIndex].Move(delta);
         }
-        else if (GetMouse(0).bReleased && selectMousePos == GetMousePos()) {
+        else if (GetMouse(0).bReleased && mouseClickPos == GetMousePos()) {
             timer = 0.0f;
             TextEntryEnable(true);
             textEntryGetCursor = TextEntryGetCursor();
@@ -173,12 +171,12 @@ public:
                 textEntryGetCursor = TextEntryGetCursor();
             }
             if (timer < 0.5f) {
-                float x = TextEntryGetCursor() * 8 + 4;
-                FillRect(rectangles[selectedIndex].GetPosition() + olc::vf2d(x, 2), olc::vf2d(2, 12), olc::WHITE);
+                float x = TextEntryGetCursor() * 8 + 3;
+                FillRect(rectangles[selectedIndex].GetPosition() + olc::vf2d(x, 2), olc::vf2d(1, 12), olc::WHITE);
             }
         }
 
-        initialMousePos = GetMousePos();
+        pastMousePos = GetMousePos();
 
         return true;
     }
@@ -186,8 +184,8 @@ public:
 private:
     std::vector<RectangleText> rectangles;
     int32_t selectedIndex = -1;
-    olc::vf2d initialMousePos;
-    olc::vf2d selectMousePos;
+    olc::vf2d pastMousePos;
+    olc::vf2d mouseClickPos;
     float textEntryGetCursor;
     float timer;
 };
