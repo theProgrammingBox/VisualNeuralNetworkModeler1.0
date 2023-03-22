@@ -151,12 +151,16 @@ public:
         }
 
         if (GetMouse(1).bPressed) {
-			RectangleText rect(this);
-			rect.SetPosition(GetMousePos());
-			rect.SetLabel("Default");
-			rect.SetPadding(olc::vf2d(4, 4));
-            rect.SetHSL((float)rand() / RAND_MAX, 0.75f, 0.5f);
-			rectangles.emplace_back(rect);
+            if (!IsTextEntryEnabled()) {
+                RectangleText rect(this);
+                rect.SetPosition(GetMousePos());
+                rect.SetLabel("Default");
+                rect.SetPadding(olc::vf2d(4, 4));
+                rect.SetHSL((float)rand() / RAND_MAX, 0.75f, 0.5f);
+                rectangles.emplace_back(rect);
+			} else {
+				TextEntryEnable(false);
+			}
         }
 
         for (auto& rect : rectangles) {
