@@ -41,12 +41,11 @@ public:
 			closestPointToMouse = startNodePosition + delta * t / squaredLength;
 		}
 		
-		pge->DrawLine(startNodePosition, endNodePosition, matrixNode->GetColor());
-		if ((point - closestPointToMouse).mag2() <= 16)
-			pge->DrawLine(closestPointToMouse, matrixNodePosition, matrixNode->GetColor(), 0x55555555);
-	}
-
-	void Contains() {
+		//pge->DrawLine(startNodePosition, endNodePosition, matrixNode->GetColor());
+		DrawThickDirectedLine(startNodePosition, endNodePosition, matrixNode->GetColor(), 4);
+		if ((point - closestPointToMouse).mag2() <= 64)
+			//pge->DrawLine(closestPointToMouse, matrixNodePosition, matrixNode->GetColor(), 0x44444444);
+			DrawThickDirectedLine(matrixNodePosition, closestPointToMouse, matrixNode->GetColor(), 4);
 	}
 
 private:
@@ -55,4 +54,22 @@ private:
 	TextBox* startNode;
 	TextBox* endNode;
 	TextBox* matrixNode;
+
+	void DrawThickDirectedLine(const olc::vi2d& p1, const olc::vi2d& p2, const olc::Pixel& color, uint8_t thickness) {
+		olc::vf2d delta = p2 - p1;
+		float length = delta.mag();
+		if (length == 0) return;
+		olc::vf2d normDelta = delta / length * thickness * 0.5f;
+		olc::vf2d perpDelta = normDelta.perp();
+		olc::vf2d shift = -normDelta * 0.866025403784f * 10;
+		olc::vf2d p1m = p1 - perpDelta;
+		olc::vf2d p2p = p2 + perpDelta + shift;
+		olc::vf2d p2m = p2 - perpDelta + shift;
+		pge->FillTriangle(p1 + perpDelta, p1m, p2p, color);
+		pge->FillTriangle(p2m, p1m, p2p, color);
+
+		olc::vf2d tri1 = p2 + perpDelta * 0.5f * 10;
+		olc::vf2d tri2 = p2 - perpDelta * 0.5f * 10;
+		pge->FillTriangle(p2, tri1 + shift, tri2 + shift, color);
+	}
 };
