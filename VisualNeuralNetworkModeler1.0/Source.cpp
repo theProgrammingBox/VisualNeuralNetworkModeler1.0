@@ -196,6 +196,8 @@ private:
                 FillRect(textBoxes[clickedTextBoxIndex]->GetPosition() + x, olc::vf2d(1, 8) * scale, olc::WHITE);
             }
         }
+
+        //DrawBezierCurve(olc::vf2d(600, 350), GetMousePos(), olc::RED, 4);
     }
 };
 
