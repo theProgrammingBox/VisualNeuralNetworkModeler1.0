@@ -19,12 +19,11 @@ public:
 		padding = olc::vi2d(0, 0);
 		displayedSize = olc::vi2d(0, 0);
 
-		glow = true;
+        glow = false;
 		hue = 0;
 		saturation = 0;
 		lightness = 0;
 		color = olc::BLANK;
-		displayedColor = olc::BLANK;
     }
 
     void SetTextHug(bool textHug) {
@@ -70,7 +69,6 @@ public:
 
     void SetGlow(bool glow) {
         this->glow = glow;
-		UpdateDisplayedColor();
     }
 
     void SetHSL(float h, float s = 0.65f, float l = 0.45f) {
@@ -103,31 +101,35 @@ public:
 
     void SetColor(olc::Pixel color) {
         this->color = color;
-		UpdateDisplayedColor();
     }
-
-	void UpdateDisplayedColor() {
-        displayedColor = color;
-        if (glow) {
-            uint8_t r = (255 + color.r) * 0.5f;
-            uint8_t g = (255 + color.g) * 0.5f;
-            uint8_t b = (255 + color.b) * 0.5f;
-			displayedColor = olc::Pixel(r, g, b);
-        }
-	}
 
     bool Contains(olc::vi2d point) const {
 		return point.x >= position.x && point.x <= position.x + displayedSize.x && point.y >= position.y && point.y <= position.y + displayedSize.y;
     }
 
     void Move(olc::vi2d delta) {
-        position += movable * delta;
+        position += delta;
     }
 
     void Render() {
-        pge->FillRect(position, displayedSize, color);
+        olc::Pixel displayColor = color;
+        if (glow) {
+            uint8_t red = color.r * 0.7f + 255 * 0.3f;
+            uint8_t green = color.g * 0.7f + 255 * 0.3f;
+            uint8_t blue = color.b * 0.7f + 255 * 0.3f;
+            displayColor = olc::Pixel(red, green, blue);
+        }
+        pge->FillRect(position, displayedSize, displayColor);
 		pge->DrawString(position + padding * scale, label, olc::WHITE, scale);
     }
+
+	bool IsLabelable() const {
+		return labelable;
+	}
+
+	bool IsMovable() const {
+		return movable;
+	}
 
     olc::vi2d GetPosition() const {
         return position;
@@ -141,13 +143,9 @@ public:
 		return padding;
 	}
 
-	bool IsMovable() const {
-		return movable;
-	}
-
-	bool IsLabelable() const {
-		return labelable;
-	}
+    olc::vi2d GetDisplayedSize() const {
+        return displayedSize;
+    }
 
 private:
     olc::PixelGameEngine* pge;
@@ -169,5 +167,4 @@ private:
     float saturation;
     float lightness;
     olc::Pixel color;
-	olc::Pixel displayedColor;
 };
