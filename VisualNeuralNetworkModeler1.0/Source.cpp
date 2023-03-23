@@ -1,9 +1,8 @@
-#include "TextBox.h"
+#include "DirectedConnection.h"
 
 /*
 TODO
-0. work out submit button
-1. work out lower panel
+0. work out connections
 */
 
 class VisualNeuralNetworkModeler : public olc::PixelGameEngine {
@@ -14,8 +13,8 @@ public:
 
     bool OnUserCreate() override {
         pastMousePos = GetMousePos();
-        clickedIndex = -1;
-        HoverIndex = -1;
+        clickedTextBoxIndex = -1;
+        textBoxHoverIndex = -1;
 
 		TextBox submitButton(this);
 		submitButton.SetLabelable(false);
@@ -39,15 +38,46 @@ public:
 
         TextBox lowerPannel(this);
         lowerPannel.SetTextHug(false);
-		lowerPannel.SetLabelable(false);
-		lowerPannel.SetMovable(false);
-		lowerPannel.SetPosition(olc::vf2d(0, ScreenHeight() - 32));
-		lowerPannel.SetScale(2);
+        lowerPannel.SetLabelable(false);
+        lowerPannel.SetMovable(false);
+        lowerPannel.SetPosition(olc::vf2d(0, ScreenHeight() - 32));
+        lowerPannel.SetScale(2);
         lowerPannel.SetPadding(olc::vf2d(4, 4));
         lowerPannel.SetBaseSize(olc::vf2d(ScreenWidth() * 0.5f, 8));
-		lowerPannel.SetGlowable(false);
-		lowerPannel.SetColor(olc::Pixel(30, 30, 30));
-		textBoxes.push_back(lowerPannel);
+        lowerPannel.SetGlowable(false);
+        lowerPannel.SetColor(olc::Pixel(30, 30, 30));
+        textBoxes.push_back(lowerPannel);
+
+        TextBox defaultInputNode(this);
+        defaultInputNode.SetTextHug(false);
+        defaultInputNode.SetLabelable(false);
+        defaultInputNode.SetMovable(false);
+        defaultInputNode.SetPosition(olc::vf2d(8, 40));
+        defaultInputNode.SetBaseSize(olc::vf2d(8, 8));
+        defaultInputNode.SetColor(olc::Pixel(30, 30, 30));
+        textBoxes.push_back(defaultInputNode);
+
+        TextBox defaultOutputNode(this);
+        defaultOutputNode.SetTextHug(false);
+        defaultOutputNode.SetLabelable(false);
+        defaultOutputNode.SetMovable(false);
+		defaultOutputNode.SetPosition(olc::vf2d(ScreenWidth() - 16, 40));
+        defaultOutputNode.SetBaseSize(olc::vf2d(8, 8));
+        defaultOutputNode.SetColor(olc::Pixel(30, 30, 30));
+        textBoxes.push_back(defaultOutputNode);
+        
+        TextBox defaultInputMatrix(this);
+		defaultInputMatrix.SetPosition(olc::vf2d(ScreenWidth() * 0.5f, ScreenHeight() * 0.5f));
+        defaultInputMatrix.SetLabel("Input Matrix");
+        defaultInputMatrix.SetPadding(olc::vf2d(4, 4));
+        defaultInputMatrix.SetHSL((float)rand() / RAND_MAX);
+        textBoxes.emplace_back(defaultInputMatrix);
+
+		DirectedConnection defaultConnection(this);
+		defaultConnection.SetStartNode(&textBoxes[3]);
+		defaultConnection.SetEndNode(&textBoxes[4]);
+		defaultConnection.SetMatrixNode(&textBoxes[5]);
+		directedConnections.push_back(defaultConnection);
         
         return true;
     }
@@ -62,25 +92,27 @@ public:
 
 private:
     std::vector<TextBox> textBoxes;
-    int32_t clickedIndex;
-    int32_t HoverIndex;
+    std::vector<DirectedConnection> directedConnections;
+    int32_t clickedTextBoxIndex;
+    int32_t textBoxHoverIndex;
+    int32_t directedConnectionHoverIndex;
     olc::vf2d pastMousePos;
     olc::vf2d mouseClickPos;
     float pastTextEntryCursorPos;
     float blinkTimer;
 
     void MouseHandle() {
-        if (HoverIndex != -1)
-            textBoxes[HoverIndex].SetGlow(false);
-        HoverIndex = -1;
+        if (textBoxHoverIndex != -1)
+            textBoxes[textBoxHoverIndex].SetGlow(false);
+        textBoxHoverIndex = -1;
         if (GetMouse(0).bPressed) {
-            clickedIndex = -1;
+            clickedTextBoxIndex = -1;
             if (!IsTextEntryEnabled()) {
                 for (int32_t i = textBoxes.size(); i--;) {
                     if (textBoxes[i].Contains(GetMousePos())) {
-                        clickedIndex = i;
-                        HoverIndex = i;
-                        textBoxes[HoverIndex].SetGlow(true);
+                        clickedTextBoxIndex = i;
+                        textBoxHoverIndex = i;
+                        textBoxes[textBoxHoverIndex].SetGlow(true);
                         mouseClickPos = GetMousePos();
                         break;
                     }
@@ -93,18 +125,25 @@ private:
         else {
             for (int32_t i = textBoxes.size(); i--;) {
 				if (textBoxes[i].Contains(GetMousePos()) && textBoxes[i].IsGlowable()) {
-                    HoverIndex = i;
-                    textBoxes[HoverIndex].SetGlow(true);
+                    textBoxHoverIndex = i;
+                    textBoxes[textBoxHoverIndex].SetGlow(true);
                     break;
                 }
             }
             
-            if (clickedIndex != -1) {
-                if (GetMouse(0).bHeld && textBoxes[clickedIndex].IsMovable()) {
+			for (int32_t i = directedConnections.size(); i--;) {
+				if (directedConnections[i].Contains(GetMousePos())) {
+					directedConnectionHoverIndex = i;
+					break;
+				}
+			}
+            
+            if (clickedTextBoxIndex != -1) {
+                if (GetMouse(0).bHeld && textBoxes[clickedTextBoxIndex].IsMovable()) {
                     olc::vf2d delta = GetMousePos() - pastMousePos;
-                    textBoxes[clickedIndex].Move(delta);
+                    textBoxes[clickedTextBoxIndex].Move(delta);
                 }
-                else if (GetMouse(0).bReleased && mouseClickPos == GetMousePos() && textBoxes[clickedIndex].IsLabelable()) {
+                else if (GetMouse(0).bReleased && mouseClickPos == GetMousePos() && textBoxes[clickedTextBoxIndex].IsLabelable()) {
                     blinkTimer = 0.0f;
                     TextEntryEnable(true);
                     pastTextEntryCursorPos = TextEntryGetCursor();
@@ -134,7 +173,7 @@ private:
         {
             blinkTimer += fElapsedTime;
             blinkTimer -= (blinkTimer >= 1.0f);
-            textBoxes[clickedIndex].SetLabel(TextEntryGetString());
+            textBoxes[clickedTextBoxIndex].SetLabel(TextEntryGetString());
         }
     }
 
@@ -145,15 +184,19 @@ private:
             textBox.Render();
         }
 
+		for (auto& directedConnection : directedConnections) {
+			directedConnection.Render();
+		}
+
         if (IsTextEntryEnabled()) {
             if (pastTextEntryCursorPos != TextEntryGetCursor()) {
                 blinkTimer = 0.0f;
                 pastTextEntryCursorPos = TextEntryGetCursor();
             }
             if (blinkTimer < 0.5f) {
-                uint32_t scale = textBoxes[clickedIndex].GetScale();
-                olc::vi2d x = (olc::vf2d(TextEntryGetCursor() * 8 - 1, 0) + textBoxes[clickedIndex].GetPadding()) * scale;
-                FillRect(textBoxes[clickedIndex].GetPosition() + x, olc::vf2d(1, 8) * scale, olc::WHITE);
+                uint32_t scale = textBoxes[clickedTextBoxIndex].GetScale();
+                olc::vi2d x = (olc::vf2d(TextEntryGetCursor() * 8 - 1, 0) + textBoxes[clickedTextBoxIndex].GetPadding()) * scale;
+                FillRect(textBoxes[clickedTextBoxIndex].GetPosition() + x, olc::vf2d(1, 8) * scale, olc::WHITE);
             }
         }
     }

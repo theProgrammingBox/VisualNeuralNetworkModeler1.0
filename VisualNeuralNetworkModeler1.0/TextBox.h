@@ -156,6 +156,10 @@ public:
         return glowable;
     }
 
+	olc::Pixel GetColor() const {
+		return color;
+	}
+
 private:
     olc::PixelGameEngine* pge;
     

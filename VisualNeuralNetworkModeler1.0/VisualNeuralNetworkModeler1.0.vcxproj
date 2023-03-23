@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DirectedConnection.h" />
     <ClInclude Include="olcPixelGameEngine.h" />
     <ClInclude Include="TextBox.h" />
   </ItemGroup>
