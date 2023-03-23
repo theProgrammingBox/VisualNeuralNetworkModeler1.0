@@ -2,7 +2,9 @@
 
 /*
 TODO
-0. work out connections
+0. maybe just try normal line but with an arrow head
+1. Prevent texBoxes from going below or above the boarder pannels
+2. make vertical padding dynamic to number of inputs and outputs
 */
 
 class VisualNeuralNetworkModeler : public olc::PixelGameEngine {
@@ -40,10 +42,10 @@ public:
         lowerPannel->SetTextHug(false);
         lowerPannel->SetLabelable(false);
         lowerPannel->SetMovable(false);
-        lowerPannel->SetPosition(olc::vf2d(0, ScreenHeight() - 32));
+        lowerPannel->SetPosition(olc::vf2d(0, ScreenHeight() - 120));
         lowerPannel->SetScale(3);
-        lowerPannel->SetPadding(olc::vf2d(4, 4));
-        lowerPannel->SetBaseSize(olc::vf2d(ScreenWidth() * 0.5f, 8));
+        lowerPannel->SetPadding(olc::vf2d(16, 16));
+        lowerPannel->SetBaseSize(olc::vf2d((ScreenWidth() - 94) * 0.33333333f, 8));
         lowerPannel->SetGlowable(false);
         lowerPannel->SetColor(olc::Pixel(30, 30, 30));
         textBoxes.push_back(lowerPannel);
@@ -53,8 +55,7 @@ public:
         defaultInputNode->SetLabelable(false);
         defaultInputNode->SetMovable(false);
         defaultInputNode->SetPosition(olc::vf2d(16, 80));
-        defaultInputNode->SetScale(2);
-        defaultInputNode->SetBaseSize(olc::vf2d(8, 8));
+        defaultInputNode->SetBaseSize(olc::vf2d(16, 16));
         defaultInputNode->SetColor(olc::Pixel(30, 30, 30));
         textBoxes.push_back(defaultInputNode);
 
@@ -63,8 +64,7 @@ public:
         defaultOutputNode->SetLabelable(false);
         defaultOutputNode->SetMovable(false);
 		defaultOutputNode->SetPosition(olc::vf2d(ScreenWidth() - 32, 80));
-        defaultOutputNode->SetScale(2);
-        defaultOutputNode->SetBaseSize(olc::vf2d(8, 8));
+        defaultOutputNode->SetBaseSize(olc::vf2d(16, 16));
         defaultOutputNode->SetColor(olc::Pixel(30, 30, 30));
         textBoxes.push_back(defaultOutputNode);
         
@@ -155,7 +155,7 @@ private:
                 textBox->SetPosition(GetMousePos());
                 textBox->SetLabel("Default");
 				textBox->SetScale(2);
-                textBox->SetPadding(olc::vf2d(4, 4));
+                textBox->SetPadding(olc::vf2d(4, 16));
                 textBox->SetHSL((float)rand() / RAND_MAX);
                 textBoxes.emplace_back(textBox);
             }

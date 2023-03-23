@@ -42,10 +42,10 @@ public:
 		}
 		
 		//pge->DrawLine(startNodePosition, endNodePosition, matrixNode->GetColor());
-		DrawThickDirectedLine(startNodePosition, endNodePosition, matrixNode->GetColor(), 4);
+		DrawThickDirectedLine(startNodePosition, endNodePosition, matrixNode->GetColor(), 3);
 		if ((point - closestPointToMouse).mag2() <= 64)
 			//pge->DrawLine(closestPointToMouse, matrixNodePosition, matrixNode->GetColor(), 0x44444444);
-			DrawThickDirectedLine(matrixNodePosition, closestPointToMouse, matrixNode->GetColor(), 4);
+			DrawThickDirectedLine(matrixNodePosition, closestPointToMouse, matrixNode->GetColor(), 3);
 	}
 
 private:
