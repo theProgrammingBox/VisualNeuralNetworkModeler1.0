@@ -14,39 +14,17 @@ public:
     bool OnUserCreate() override {
         pastMousePos = GetMousePos();
         
-        /*TextBox upperPannel(this);
+        TextBox upperPannel(this);
+		upperPannel.SetPosition(olc::vf2d(0, 0));
+		upperPannel.SetLabel("Component Name");
+		upperPannel.SetScale(2);
+		upperPannel.SetBaseSize(olc::vf2d(ScreenWidth() / upperPannel.GetScale() - 16, 8));
+		upperPannel.SetPadding(olc::vf2d(8, 8));
+		upperPannel.SetColor(olc::Pixel(30, 30, 30));
 		upperPannel.SetTextHug(false);
 		upperPannel.SetMovable(false);
-		upperPannel.SetLabel("Component Name");
-		upperPannel.SetSize(olc::vf2d(ScreenWidth(), 20));
-		upperPannel.SetColor(olc::Pixel(30, 30, 30));
-		upperPannel.SetPadding(olc::vf2d(4, 4));
-		upperPannel.SetScale(4);
-		upperPannel.SetPosition(olc::vf2d(20, 20));
-		rectangles.push_back(upperPannel);*/
+		rectangles.push_back(upperPannel);
         return true;
-    }
-
-    void Render() {
-        Clear(olc::Pixel(40, 40, 40));
-
-        for (auto& rect : rectangles) {
-            rect.Render();
-        }
-
-        if (IsTextEntryEnabled()) {
-            if (textEntryGetCursor != TextEntryGetCursor()) {
-                timer = 0.0f;
-                textEntryGetCursor = TextEntryGetCursor();
-            }
-            if (timer < 0.5f) {
-                float x = TextEntryGetCursor() * 8 + 3;
-                FillRect(rectangles[selectedIndex].GetPosition() + olc::vf2d(x, 2), olc::vf2d(1, 12), olc::WHITE);
-            }
-        }
-
-        /*FillRect(rectangles[selectedIndex].GetPosition() + olc::vf2d(x, 2), olc::vf2d(1, 12), olc::WHITE);
-        FillRect(rectangles[selectedIndex].GetPosition() + olc::vf2d(x, 2), olc::vf2d(1, 12), olc::WHITE);*/
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
@@ -81,14 +59,16 @@ private:
                 TextEntryEnable(false);
             }
         }
-        else if (GetMouse(0).bHeld && selectedIndex != -1) {
-            olc::vf2d delta = GetMousePos() - pastMousePos;
-            rectangles[selectedIndex].Move(delta);
-        }
-        else if (GetMouse(0).bReleased && mouseClickPos == GetMousePos()) {
-            timer = 0.0f;
-            TextEntryEnable(true);
-            textEntryGetCursor = TextEntryGetCursor();
+        else if (selectedIndex != -1) {
+            if (GetMouse(0).bHeld && rectangles[selectedIndex].IsMovable()) {
+                olc::vf2d delta = GetMousePos() - pastMousePos;
+                rectangles[selectedIndex].Move(delta);
+            }
+            else if (GetMouse(0).bReleased && mouseClickPos == GetMousePos() && rectangles[selectedIndex].IsLabelable()) {
+                timer = 0.0f;
+                TextEntryEnable(true);
+                textEntryGetCursor = TextEntryGetCursor();
+            }
         }
 
         pastMousePos = GetMousePos();
@@ -113,6 +93,26 @@ private:
             }
             else {
                 TextEntryEnable(false);
+            }
+        }
+    }
+
+    void Render() {
+        Clear(olc::Pixel(40, 40, 40));
+
+        for (auto& rect : rectangles) {
+            rect.Render();
+        }
+
+        if (IsTextEntryEnabled()) {
+            if (textEntryGetCursor != TextEntryGetCursor()) {
+                timer = 0.0f;
+                textEntryGetCursor = TextEntryGetCursor();
+            }
+            if (timer < 0.5f) {
+                uint32_t scale = rectangles[selectedIndex].GetScale();
+                olc::vi2d x = (olc::vf2d(TextEntryGetCursor() * 8 - 1, 0) + rectangles[selectedIndex].GetPadding()) * scale;
+                FillRect(rectangles[selectedIndex].GetPosition() + x, olc::vf2d(1, 8) * scale, olc::WHITE);
             }
         }
     }

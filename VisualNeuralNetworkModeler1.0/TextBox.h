@@ -115,6 +115,22 @@ public:
         return position;
     }
 
+	uint32_t GetScale() const {
+		return scale;
+	}
+
+	olc::vi2d GetPadding() const {
+		return padding;
+	}
+
+	bool IsMovable() const {
+		return movable;
+	}
+
+	bool IsLabelable() const {
+		return labelable;
+	}
+
 private:
     olc::PixelGameEngine* pge;
     
