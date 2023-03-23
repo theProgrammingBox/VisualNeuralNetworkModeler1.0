@@ -60,7 +60,7 @@ private:
             }
         }
         else if (selectedIndex != -1) {
-            if (GetMouse(0).bHeld && rectangles[selectedIndex].IsMovable()) {
+            if (GetMouse(0).bHeld) {
                 olc::vf2d delta = GetMousePos() - pastMousePos;
                 rectangles[selectedIndex].Move(delta);
             }
@@ -88,7 +88,7 @@ private:
                 rect.SetPosition(GetMousePos());
                 rect.SetLabel("Default");
                 rect.SetPadding(olc::vf2d(4, 4));
-                rect.SetHSL((float)rand() / RAND_MAX, 0.75f, 0.5f);
+                rect.SetHSL((float)rand() / RAND_MAX, 0.65f, 0.45f);
                 rectangles.emplace_back(rect);
             }
             else {

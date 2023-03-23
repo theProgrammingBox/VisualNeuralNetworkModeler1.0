@@ -7,7 +7,11 @@ public:
     TextBox(olc::PixelGameEngine* pge) {
         this->pge = pge;
         
+        textHug = true;
+        labelable = true;
         label = "";
+        
+        movable = true;
 		position = olc::vi2d(0, 0);
 
         scale = 1;
@@ -15,20 +19,30 @@ public:
 		padding = olc::vi2d(0, 0);
 		displayedSize = olc::vi2d(0, 0);
 
-		color = olc::BLANK;
+		glow = true;
 		hue = 0;
 		saturation = 0;
 		lightness = 0;
+		color = olc::BLANK;
+		displayedColor = olc::BLANK;
+    }
 
-        textHug = true;
-        movable = true;
-        labelable = true;
+    void SetTextHug(bool textHug) {
+        this->textHug = textHug;
+    }
+
+    void SetLabelable(bool labelable) {
+        this->labelable = labelable;
     }
 
     void SetLabel(std::string label) {
         this->label = label;
 		if (textHug)
             SetBaseSize(olc::vi2d(label.size() * 8, 8));
+    }
+
+    void SetMovable(bool movable) {
+        this->movable = movable;
     }
 
     void SetPosition(olc::vi2d position) {
@@ -54,11 +68,12 @@ public:
         displayedSize = (baseSize + padding * 2) * scale;
     }
 
-	void SetColor(olc::Pixel color) {
-		this->color = color;
-	}
+    void SetGlow(bool glow) {
+        this->glow = glow;
+		UpdateDisplayedColor();
+    }
 
-    void SetHSL(float h, float s, float l) {
+    void SetHSL(float h, float s = 0.65f, float l = 0.45f) {
         this->hue = h;
         this->saturation = s;
         this->lightness = l;
@@ -82,32 +97,35 @@ public:
         float r = hue2rgb(p, q, h + 1.0 / 3);
         float g = hue2rgb(p, q, h);
         float b = hue2rgb(p, q, h - 1.0 / 3);
-
-        color = olc::Pixel(static_cast<uint8_t>(r * 255), static_cast<uint8_t>(g * 255), static_cast<uint8_t>(b * 255));
+        
+		SetColor(olc::Pixel(static_cast<uint8_t>(r * 255), static_cast<uint8_t>(g * 255), static_cast<uint8_t>(b * 255)));
     }
 
-    void SetTextHug(bool textHug) {
-        this->textHug = textHug;
+    void SetColor(olc::Pixel color) {
+        this->color = color;
+		UpdateDisplayedColor();
     }
 
-    void SetMovable(bool movable) {
-        this->movable = movable;
-    }
-
-    void SetLabelable(bool labelable) {
-        this->labelable = labelable;
-    }
+	void UpdateDisplayedColor() {
+        displayedColor = color;
+        if (glow) {
+            uint8_t r = (255 + color.r) * 0.5f;
+            uint8_t g = (255 + color.g) * 0.5f;
+            uint8_t b = (255 + color.b) * 0.5f;
+			displayedColor = olc::Pixel(r, g, b);
+        }
+	}
 
     bool Contains(olc::vi2d point) const {
 		return point.x >= position.x && point.x <= position.x + displayedSize.x && point.y >= position.y && point.y <= position.y + displayedSize.y;
     }
 
     void Move(olc::vi2d delta) {
-        position += delta;
+        position += movable * delta;
     }
 
     void Render() {
-		pge->FillRect(position, displayedSize, color);
+        pge->FillRect(position, displayedSize, color);
 		pge->DrawString(position + padding * scale, label, olc::WHITE, scale);
     }
 
@@ -134,7 +152,11 @@ public:
 private:
     olc::PixelGameEngine* pge;
     
+    bool textHug;
+    bool labelable;
     std::string label;
+    
+	bool movable;
     olc::vi2d position;
 
 	uint32_t scale;
@@ -142,12 +164,10 @@ private:
     olc::vi2d padding;
 	olc::vi2d displayedSize;
     
-    olc::Pixel color;
+    bool glow;
     float hue;
     float saturation;
     float lightness;
-    
-    bool textHug;
-	bool movable;
-    bool labelable;
+    olc::Pixel color;
+	olc::Pixel displayedColor;
 };
