@@ -131,13 +131,6 @@ private:
                 }
             }
             
-			for (int32_t i = directedConnections.size(); i--;) {
-				if (directedConnections[i].Contains(GetMousePos())) {
-					directedConnectionHoverIndex = i;
-					break;
-				}
-			}
-            
             if (clickedTextBoxIndex != -1) {
                 if (GetMouse(0).bHeld && textBoxes[clickedTextBoxIndex].IsMovable()) {
                     olc::vf2d delta = GetMousePos() - pastMousePos;
@@ -185,7 +178,7 @@ private:
         }
 
 		for (auto& directedConnection : directedConnections) {
-			directedConnection.Render();
+			directedConnection.Render(pastMousePos);
 		}
 
         if (IsTextEntryEnabled()) {
