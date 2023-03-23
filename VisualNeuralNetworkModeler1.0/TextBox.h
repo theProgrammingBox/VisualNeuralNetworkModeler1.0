@@ -19,6 +19,7 @@ public:
 		padding = olc::vi2d(0, 0);
 		displayedSize = olc::vi2d(0, 0);
 
+        glowable = true;
         glow = false;
 		hue = 0;
 		saturation = 0;
@@ -65,6 +66,10 @@ public:
 
     void UpdateDisplayedSize() {
         displayedSize = (baseSize + padding * 2) * scale;
+    }
+
+    void SetGlowable(bool glowable) {
+        this->glowable = glowable;
     }
 
     void SetGlow(bool glow) {
@@ -147,6 +152,10 @@ public:
         return displayedSize;
     }
 
+    bool IsGlowable() const {
+        return glowable;
+    }
+
 private:
     olc::PixelGameEngine* pge;
     
@@ -162,6 +171,7 @@ private:
     olc::vi2d padding;
 	olc::vi2d displayedSize;
     
+    bool glowable;
     bool glow;
     float hue;
     float saturation;

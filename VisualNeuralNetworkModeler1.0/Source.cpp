@@ -18,25 +18,36 @@ public:
         HoverIndex = -1;
 
 		TextBox submitButton(this);
-		submitButton.SetScale(2);
-		submitButton.SetLabel("Submit");
-		submitButton.SetPadding(olc::vf2d(4, 4));
-		submitButton.SetPosition(olc::vf2d(ScreenWidth() - submitButton.GetDisplayedSize().x, 0));
-		submitButton.SetColor(olc::Pixel(20, 20, 20));
-		submitButton.SetMovable(false);
 		submitButton.SetLabelable(false);
+		submitButton.SetLabel("Submit");
+		submitButton.SetMovable(false);
+		submitButton.SetPosition(olc::vf2d(ScreenWidth() - 112, 0));
+		submitButton.SetScale(2);
+		submitButton.SetPadding(olc::vf2d(4, 4));
+		submitButton.SetColor(olc::Pixel(30, 30, 30));
 		textBoxes.push_back(submitButton);
-        
+
         TextBox upperPannel(this);
-		upperPannel.SetPosition(olc::vf2d(0, 0));
-		upperPannel.SetTextHug(false);
-		upperPannel.SetLabel("Component Name");
-		upperPannel.SetScale(2);
-		upperPannel.SetPadding(olc::vf2d(4, 4));
-        upperPannel.SetBaseSize(olc::vf2d((ScreenWidth() - textBoxes.back().GetDisplayedSize().x - 4 * upperPannel.GetPadding().x) / upperPannel.GetScale(), 8));
-		upperPannel.SetColor(olc::Pixel(20, 20, 20));
-		upperPannel.SetMovable(false);
-		textBoxes.push_back(upperPannel);
+        upperPannel.SetTextHug(false);
+        upperPannel.SetLabel("Component Name");
+        upperPannel.SetMovable(false);
+        upperPannel.SetScale(2);
+        upperPannel.SetPadding(olc::vf2d(4, 4));
+        upperPannel.SetBaseSize(olc::vf2d((ScreenWidth() - 128) * 0.5f, 8));
+        upperPannel.SetColor(olc::Pixel(30, 30, 30));
+        textBoxes.push_back(upperPannel);
+
+        TextBox lowerPannel(this);
+        lowerPannel.SetTextHug(false);
+		lowerPannel.SetLabelable(false);
+		lowerPannel.SetMovable(false);
+		lowerPannel.SetPosition(olc::vf2d(0, ScreenHeight() - 32));
+		lowerPannel.SetScale(2);
+        lowerPannel.SetPadding(olc::vf2d(4, 4));
+        lowerPannel.SetBaseSize(olc::vf2d(ScreenWidth() * 0.5f, 8));
+		lowerPannel.SetGlowable(false);
+		lowerPannel.SetColor(olc::Pixel(30, 30, 30));
+		textBoxes.push_back(lowerPannel);
         
         return true;
     }
@@ -81,7 +92,7 @@ private:
         }
         else {
             for (int32_t i = textBoxes.size(); i--;) {
-                if (textBoxes[i].Contains(GetMousePos())) {
+				if (textBoxes[i].Contains(GetMousePos()) && textBoxes[i].IsGlowable()) {
                     HoverIndex = i;
                     textBoxes[HoverIndex].SetGlow(true);
                     break;
@@ -128,7 +139,7 @@ private:
     }
 
     void Render() {
-        Clear(olc::Pixel(40, 40, 40));
+        Clear(olc::Pixel(50, 50, 50));
         
         for (auto& textBox : textBoxes) {
             textBox.Render();
