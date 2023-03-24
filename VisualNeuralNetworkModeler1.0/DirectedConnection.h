@@ -41,9 +41,9 @@ public:
 			closestPointToMouse = startNodePosition + delta * t / squaredLength;
 		}
 		
-		DrawBezierCurve(startNodePosition, olc::vf2d(-1, 0), endNodePosition, olc::vf2d(1, 0), matrixNode->GetColor(), 1);
+		DrawCubicBezierCurve(startNodePosition, olc::vf2d(-1, 0), endNodePosition, olc::vf2d(1, 0), matrixNode->GetColor(), 1);
 		if ((point - closestPointToMouse).mag2() <= 64)
-			DrawBezierCurve(matrixNodePosition, olc::vf2d(0, -1), closestPointToMouse, olc::vf2d(0, 1), matrixNode->GetColor(), 1);
+			DrawCubicBezierCurve(matrixNodePosition, olc::vf2d(0, -1), closestPointToMouse, olc::vf2d(0, 1), matrixNode->GetColor(), 1, 100);
 	}
 
 private:
@@ -64,16 +64,17 @@ private:
 		pge->FillTriangle(p2 - perpDelta, p1m, p2p, color);
 	}
 
-    void DrawBezierCurve(olc::vf2d p0, olc::vf2d normal0, olc::vf2d p3, olc::vf2d normal3, olc::Pixel color, uint8_t radius = 1) {
+	void DrawCubicBezierCurve(olc::vf2d p0, olc::vf2d normal0, olc::vf2d p3, olc::vf2d normal3, olc::Pixel color, uint8_t radius = 1, uint16_t segments = 10) {
 		olc::vf2d p1 = p0 + 128 * normal0;
 		olc::vf2d p2 = p3 + 128 * normal3;
 		olc::vf2d pastPoint = p0;
         olc::vf2d newPoint;
 
         float t = 0;
+		float step = 1.0f / segments;
         float e1, e2, e3, c0, c1, c2, c3;
-        for (uint8_t i = 0; i < 10; ++i) {
-            t += 0.1f;
+        for (uint8_t i = 0; i < segments; ++i) {
+            t += step;
             e1 = 3 * t;
             e2 = e1 * t;
             e3 = e2 * t;
