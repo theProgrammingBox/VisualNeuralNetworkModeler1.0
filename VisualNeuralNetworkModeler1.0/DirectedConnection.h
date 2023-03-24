@@ -53,7 +53,7 @@ private:
 	TextBox* endNode;
 	TextBox* matrixNode;
 
-	void DrawThickDirectedLine(const olc::vf2d& p1, const olc::vf2d& p2, const olc::Pixel& color, uint8_t radius = 1) {
+	void DrawThickLine(const olc::vf2d& p1, const olc::vf2d& p2, const olc::Pixel& color, uint8_t radius = 1) {
 		olc::vf2d delta = p2 - p1;
 		float sqrLength = delta.mag2();
 		if (sqrLength == 0) return;
@@ -85,7 +85,7 @@ private:
             c3 = 0.3333f * e3;
 
             newPoint = p0 * c0 + p1 * c1 + p2 * c2 + p3 * c3;
-			DrawThickDirectedLine(pastPoint, newPoint, color, radius);
+			DrawThickLine(pastPoint, newPoint, color, radius);
 			pastPoint = newPoint;
         }
     }

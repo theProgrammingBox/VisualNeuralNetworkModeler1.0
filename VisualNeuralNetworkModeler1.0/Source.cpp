@@ -71,7 +71,7 @@ public:
         TextBox* defaultInputMatrix = new TextBox(this);
 		defaultInputMatrix->SetPosition(olc::vf2d(ScreenWidth() * 0.5f, ScreenHeight() * 0.5f));
         defaultInputMatrix->SetLabel("Input Matrix");
-		defaultInputMatrix->SetScale(2);
+		//defaultInputMatrix->SetScale(2);
         defaultInputMatrix->SetPadding(olc::vf2d(4, 4));
         defaultInputMatrix->SetHSL((float)rand() / RAND_MAX);
         textBoxes.emplace_back(defaultInputMatrix);
@@ -154,7 +154,7 @@ private:
                 TextBox* textBox = new TextBox(this);
                 textBox->SetPosition(GetMousePos());
                 textBox->SetLabel("Default");
-				textBox->SetScale(2);
+				//textBox->SetScale(2);
                 textBox->SetPadding(olc::vf2d(4, 16));
                 textBox->SetHSL((float)rand() / RAND_MAX);
                 textBoxes.emplace_back(textBox);
